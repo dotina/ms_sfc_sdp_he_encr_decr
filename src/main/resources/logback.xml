@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+    <!-- Property resources -->
+    <property resource="application.properties"/>
+    <property resource="bootstrap.properties"/>
+
+    <!-- Set splunk details from properties file set above -->
+    <property name="springApplicationName" value="${spring.application.name:-undefined}"/>
+    <property name="springApplicationActiveProfile" value="${spring.profiles.active:-default}"/>
+
+    <!-- Send logs to the console -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yy-MM-dd HH:mm:ss.SSS} | Severity=%-5p | MicroService=${springApplicationName} | %m %n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Send logs to file -->
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/tmp/logs/${springApplicationName}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>/tmp/logs/${springApplicationName}_%d{yyyy-MM-dd}_%i.log</fileNamePattern>
+            <!-- or whenever the file size reaches 50MB -->
+            <maxFileSize>50MB</maxFileSize>
+            <!-- keep 30 days' worth of history -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yy-MM-dd HH:mm:ss.SSS} | Severity=%-5p | MicroService=${springApplicationName} | %m %n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Level of logs to collect and where to send them -->
+    <root level="INFO">
+        <appender-ref ref="console"/>
+        <appender-ref ref="file"/>
+    </root>
+
+</configuration>

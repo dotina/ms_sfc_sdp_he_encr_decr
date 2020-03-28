@@ -1,0 +1,61 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ms-sdp-header-decryptor
+  name: ms-sdp-header-decryptor
+  namespace: msisdn
+spec:
+  selector:
+    matchLabels:
+      app: ms-sdp-header-decryptor
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: ms-sdp-header-decryptor
+    spec:
+      containers:
+      - name: ms-sdp-header-decryptor
+        image: svdt5kubreg01.safaricom.net/ms-sdp-header-decryptor:v1.0.0
+        ports:
+        - containerPort: 8080
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 180 # start checking after 180s after pod starts, should be longer than service start time. Some service takes minutes to start, so we set a big value here.
+          periodSeconds: 10 # check health check api every 10 seconds
+          timeoutSeconds: 5 # if response time is longer than 5 seconds, we consider the check as failed
+          failureThreshold: 3 # if check fails for 3 times in a row, we consider the pod is in a bad state, pod will be restarted
+          successThreshold: 1 # if check succeeds for once, we consider the pod is back to normal
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 60 # start checking after 60s after pod starts. should set to a minimal value such that service able to receive requests as soon as it is ready
+          periodSeconds: 10 # check health check api every 10 seconds
+          timeoutSeconds: 5 # if response time is longer than 5 seconds, we consider the check as failed
+          failureThreshold: 3  # if check fails for 3 times in a row, we consider the pod is in a bad state, pod will be restarted
+          successThreshold: 1 # if check succeeds for once, we consider the pod is back to normal
+        
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-sdp-header-decryptor-service
+  namespace: msisdn
+  labels:
+    run: ms-sdp-header-decryptor-service
+spec:
+  type: NodePort
+  ports:
+  - name: ms-sdp-header-decryptor-catalog-port
+    port: 8080
+    protocol: TCP
+  selector:
+    app: ms-sdp-header-decryptor
+
