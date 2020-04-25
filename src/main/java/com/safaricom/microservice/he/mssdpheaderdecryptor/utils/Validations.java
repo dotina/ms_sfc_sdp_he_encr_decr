@@ -4,6 +4,7 @@ package com.safaricom.microservice.he.mssdpheaderdecryptor.utils;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.config.ConfigProperties;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.header.HeaderError;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.header.HeaderErrorMessage;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -124,5 +125,17 @@ public class Validations {
 
     public String getMsisdnSubString(String msisdn) {
         return msisdn.substring(msisdn.length() - 9);
+    }
+
+    /**
+     *
+     * @param url the url to be validated
+     * @return returns a boolean true or false
+     */
+    public Boolean urlValidator(String url){
+        // Get a url to validate using default schemas
+        UrlValidator urlValidator = UrlValidator.getInstance();
+        return urlValidator.isValid(url);
+
     }
 }

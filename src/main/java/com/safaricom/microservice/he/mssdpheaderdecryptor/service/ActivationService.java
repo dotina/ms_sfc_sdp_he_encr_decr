@@ -21,8 +21,6 @@ import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.sdp.activ
 import com.safaricom.microservice.he.mssdpheaderdecryptor.utils.LogsManager;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.utils.Validations;
 import com.safaricom.util.errors.model.ErrorDetails;
-import org.apache.commons.validator.routines.EmailValidator;
-import org.apache.commons.validator.routines.UrlValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -86,7 +84,7 @@ public class ActivationService {
         String apiToken = httpHeaders.get(X_API_TOKEN).get(0);
 
         // Validate the CallBack url entered
-        if (!urlValidator(apiRequest.getCallBackUrl()) || apiRequest.getCallBackUrl().isEmpty()) {
+        if (!this.validations.urlValidator(apiRequest.getCallBackUrl()) || apiRequest.getCallBackUrl().isEmpty()) {
             return new ResponseEntity<>(ApiResponse.responseFormatter(RESPONSE_CODE_400, requestReferenceID,
                     RESPONSE_INVALID_REQUEST, RESPONSE_WRONG_URL_FORMAT, "Wrong URL Format"), HttpStatus.BAD_REQUEST);
         }
@@ -98,7 +96,7 @@ public class ActivationService {
                     RESPONSE_INVALID_REQUEST, RESPONSE_EMPTY_FIELD, headerErrorMessage), HttpStatus.OK);
         }
 
-        // Check if msisdn is not encrypted
+        // Check if msisdn empty
         if (apiRequest.getMsisdn().isEmpty()) {
             return new ResponseEntity<>(ApiResponse.responseFormatter(RESPONSE_CODE_400, requestReferenceID,
                     RESPONSE_INVALID_REQUEST, RESPONSE_INVALID_MSISDN, "This field can't be empty!!!"), HttpStatus.BAD_REQUEST);
@@ -242,7 +240,6 @@ public class ActivationService {
         });
 
 
-
         return new ResponseEntity<>(new ApiResponse(), HttpStatus.OK);
     }
 
@@ -282,10 +279,5 @@ public class ActivationService {
 
     }
 
-    public Boolean urlValidator(String url){
-        // Get a url to validate using default schemas
-        UrlValidator urlValidator = UrlValidator.getInstance();
-        return urlValidator.isValid(url);
 
-    }
 }
