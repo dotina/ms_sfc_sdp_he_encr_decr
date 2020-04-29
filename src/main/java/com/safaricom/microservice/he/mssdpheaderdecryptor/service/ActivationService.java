@@ -13,8 +13,10 @@ import com.safaricom.microservice.he.mssdpheaderdecryptor.models.payloads.api.Re
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.payloads.sdp.activation.ActivationRequest;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.payloads.sdp.activation.Datum;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.payloads.sdp.activation.RequestParam;
+import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.api.ActivateDeactivateRequest;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.api.ApiRequest;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.api.ErrorMapping;
+import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.api.PaymentRequest;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.callback.CallBackResponse;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.header.HeaderErrorMessage;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.sdp.activation.ActivationResponse;
@@ -63,7 +65,7 @@ public class ActivationService {
         this.configProperties = configProperties;
     }
 
-    public ResponseEntity<ApiResponse> processRequest(HttpHeaders httpHeaders, ApiRequest apiRequest, String operation)
+    public ResponseEntity<ApiResponse> processRequest(HttpHeaders httpHeaders, ApiRequest apiRequest, PaymentRequest paymentRequest, String operation)
             throws JsonProcessingException {
 
         // Validate Headers
@@ -86,18 +88,18 @@ public class ActivationService {
         // Validate the CallBack url entered
         if (!this.validations.urlValidator(apiRequest.getCallBackUrl()) || apiRequest.getCallBackUrl().isEmpty()) {
             return new ResponseEntity<>(ApiResponse.responseFormatter(RESPONSE_CODE_400, requestReferenceID,
-                    RESPONSE_INVALID_REQUEST, RESPONSE_WRONG_URL_FORMAT, "Wrong URL Format"), HttpStatus.BAD_REQUEST);
+                    RESPONSE_INVALID_REQUEST, RESPONSE_WRONG_URL_FORMAT, "Wrong  CallBackURL Format"), HttpStatus.BAD_REQUEST);
         }
         url = apiRequest.getCallBackUrl();
 
         // Check if CpiD is empty
-        if (isEmpty(apiRequest.getCpId())) {
+        if ((apiRequest != null && isEmpty(apiRequest.getCpId())) || (paymentRequest != null && isEmpty(paymentRequest.getCpId()))) {
             return new ResponseEntity<>(ApiResponse.responseFormatter(RESPONSE_CODE_400, requestReferenceID,
                     RESPONSE_INVALID_REQUEST, RESPONSE_EMPTY_FIELD, headerErrorMessage), HttpStatus.OK);
         }
 
         // Check if msisdn empty
-        if (apiRequest.getMsisdn().isEmpty()) {
+        if ((apiRequest != null && apiRequest.getMsisdn().isEmpty()) || (paymentRequest != null && paymentRequest.getMsisdn().isEmpty()) ) {
             return new ResponseEntity<>(ApiResponse.responseFormatter(RESPONSE_CODE_400, requestReferenceID,
                     RESPONSE_INVALID_REQUEST, RESPONSE_INVALID_MSISDN, "This field can't be empty!!!"), HttpStatus.BAD_REQUEST);
         }
@@ -115,12 +117,23 @@ public class ActivationService {
                     RESPONSE_INVALID_REQUEST, RESPONSE_EMPTY_FIELD, headerErrorMessage), HttpStatus.OK);
         }
 
-
+        // Default
+        ApiResponse apiResponse = null;
         // Log service input
-        LogsManager.info(requestReferenceID, TRANSACTION_TYPE, "processRequest", "",
-                apiRequest.getMsisdn(), sourceSystem, TARGET_SYSTEM, "", RESPONSE_CODE_0, "",
-                "", "HEADERS: = ".concat(httpHeaders.toString()), "");
-        ApiResponse apiResponse = this.activateCust(requestReferenceID, sourceSystem, apiToken, apiRequest, operation);
+        if (apiRequest != null) {
+            LogsManager.info(requestReferenceID, TRANSACTION_TYPE, "processRequest", "",
+                    apiRequest.getMsisdn(), sourceSystem, TARGET_SYSTEM, "", RESPONSE_CODE_0, "",
+                    "", "HEADERS: = ".concat(httpHeaders.toString()), "");
+            apiResponse = this.activateCust(requestReferenceID, sourceSystem, apiToken, apiRequest,null, operation);
+        }
+
+        if (paymentRequest != null) {
+            LogsManager.info(requestReferenceID, TRANSACTION_TYPE, "processRequest", "",
+                    paymentRequest.getMsisdn(), sourceSystem, TARGET_SYSTEM, "", RESPONSE_CODE_0, "",
+                    "", "HEADERS: = ".concat(httpHeaders.toString()), "");
+            apiResponse = this.activateCust(requestReferenceID, sourceSystem, apiToken, null,paymentRequest, operation);
+        }
+
 
         // return correct status
 //        if (!apiResponse.getApiHeaderResponse().getResponseCode().equals("200")) {
@@ -134,16 +147,23 @@ public class ActivationService {
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
-    private ApiResponse activateCust(String requestReferenceID, String sourceSystem, String apiToken, ApiRequest apiRequest, String operation)
+    private ApiResponse activateCust(String requestReferenceID, String sourceSystem, String apiToken, ApiRequest apiRequest,PaymentRequest payRequest, String operation)
             throws JsonProcessingException {
 
        String  decMsisdn = (MSISDNCryptoLib.SAFFPEdecryptor(apiRequest.getMsisdn()));
 
-        ActivationRequest activationRequest = prepRequest(apiRequest, requestReferenceID, operation, decMsisdn);
+        ActivationRequest activationRequest = prepRequest(apiRequest, null,requestReferenceID, operation, decMsisdn);
+        ActivationRequest paymentRequest = prepRequest(null,payRequest, requestReferenceID, operation, decMsisdn);
         objectMapper = new ObjectMapper();
-
-        String restTemplateResponse = this.restTemplateUtil.makeAPICall(sourceSystem,apiToken ,X_CORRELATION_CONVERSATION_ID,
-                requestReferenceID,configProperties.getSdpUrl(),operation, msisdn, activationRequest);
+        String restTemplateResponse = "";
+        if (payRequest != null) {
+            restTemplateResponse = this.restTemplateUtil.makeAPICall(sourceSystem, apiToken, X_CORRELATION_CONVERSATION_ID,
+                    requestReferenceID, configProperties.getSdpUrl(), operation, msisdn, paymentRequest);
+        }
+        if (apiRequest != null) {
+            restTemplateResponse = this.restTemplateUtil.makeAPICall(sourceSystem, apiToken, X_CORRELATION_CONVERSATION_ID,
+                    requestReferenceID, configProperties.getSdpUrl(), operation, msisdn, activationRequest);
+        }
         ResponseBody responseBody = new ResponseBody();
         String responseCode ="";
         String message = "";
@@ -160,6 +180,12 @@ public class ActivationService {
                 responseBody.setDescription(this.restTemplateUtil.getErrorMessage());
                 message = this.restTemplateUtil.getErrorStatusDesc();
                 break;
+            case "500" :
+                responseCode = "500";
+                responseBody.setStatus(responseCode);
+                responseBody.setDescription(this.restTemplateUtil.getErrorMessage().substring(18,187));
+                message = this.restTemplateUtil.getErrorStatusDesc();
+                break;
             default:
                 ActivationResponse activationResponse = objectMapper.readValue(restTemplateResponse, ActivationResponse.class);
                 responseCode = activationResponse.getResponseParam().getStatusCode();
@@ -168,8 +194,6 @@ public class ActivationService {
                 message = activationRequest.getOperation();
                 break;
         }
-
-
 
 
             LogsManager.error(requestReferenceID, TRANSACTION_TYPE, operation+" Customer", "",
@@ -186,17 +210,27 @@ public class ActivationService {
 
 
 
-    private ActivationRequest prepRequest(ApiRequest apiRequest, String requestId, String operationName, String msisdn){
+    private ActivationRequest prepRequest(ApiRequest apiRequest, PaymentRequest paymentRequest,String requestId, String operationName, String msisdn){
+        String[] dataValue ={} ;
+        String[] dataName = {};
+        if(paymentRequest != null) {
+             dataValue = new String[]{paymentRequest.getOfferCode(), msisdn, paymentRequest.getChargeAmount(), paymentRequest.getCpId()};
+             dataName = new String[]{"OfferCode", "Msisdn", "ChargeAmount", "CpId"};
+        }
+        if(apiRequest != null) {
+            dataValue = new String[]{apiRequest.getOfferCode(), msisdn, apiRequest.getCpId()};
+            dataName = new String[]{"OfferCode", "Msisdn", "CpId"};
+        }
 
-        String[] dataValue = {apiRequest.getOfferCode(), msisdn, apiRequest.getCpId()};
-        String[] dataName = {"OfferCode", "Msisdn", "CpId"};
 
         Set<Datum> dataSet = new HashSet<>();
 
+        String[] finalDataName = dataName;
+        String[] finalDataValue = dataValue;
         IntStream.range(0, dataName.length).forEachOrdered(i -> {
             Datum data = new Datum();
-            data.setName(dataName[i]);
-            data.setValue(dataValue[i]);
+            data.setName(finalDataName[i]);
+            data.setValue(finalDataValue[i]);
             dataSet.add(data);
         });
 

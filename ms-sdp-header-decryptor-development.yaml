@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: ms-sdp-header-decryptor
-        image: svdt5kubreg01.safaricom.net/ms-sdp-header-decryptor:v1.0.0
+        image: svdt5kubreg01.safaricom.net/ms-sdp-header-decryptor:v1.0.1
         ports:
         - containerPort: 8080
         imagePullPolicy: Always
@@ -53,7 +53,7 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - name: ms-sdp-header-decryptor-catalog-port
+  - name: ms-sdp-header-decryptor-port
     port: 8080
     protocol: TCP
   selector:

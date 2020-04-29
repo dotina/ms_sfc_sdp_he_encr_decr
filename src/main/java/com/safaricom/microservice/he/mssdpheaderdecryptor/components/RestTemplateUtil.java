@@ -2,8 +2,10 @@ package com.safaricom.microservice.he.mssdpheaderdecryptor.components;
 
 
 import com.safaricom.microservice.he.mssdpheaderdecryptor.config.ConfigProperties;
+import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.sdp.activation.ActivationResponse;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.utils.LogsManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.http.conn.HttpHostConnectException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -95,7 +97,9 @@ public class RestTemplateUtil {
             LogsManager.error(referenceId, TRANSACTION_TYPE, "makeAPICall()", "", msisdn,
                     sourceSystem, TARGET_SYSTEM, RESPONSE_TIBCO_CALL_FAILED, TIMEOUT_ERROR_CODE, RESPONSE_SERVICE_UNREACHABLE,
                     ExceptionUtils.getStackTrace(exception), requestCallToJson, exception.getLocalizedMessage());
-            return null;
+            errorMessage = exception.getMessage();
+            errorStatusDesc = String.valueOf(exception.getMostSpecificCause());
+            return "500";
         }
     }
 

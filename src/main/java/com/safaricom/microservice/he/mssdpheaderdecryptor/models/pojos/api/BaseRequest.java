@@ -1,13 +1,8 @@
 package com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.api;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import java.io.Serializable;
 
 /**
  * @author Dickens | 28.04.20
@@ -16,10 +11,9 @@ import java.io.Serializable;
 @JsonPropertyOrder({
         "msisdn",
         "offerCode",
-        "CpId",
-        "callBackUrl"
+        "CpId"
 })
-public class ApiRequest implements Serializable {
+public abstract class BaseRequest {
     @JsonProperty("msisdn")
     private String msisdn;
 
@@ -28,9 +22,6 @@ public class ApiRequest implements Serializable {
 
     @JsonProperty("CpId")
     private String CpId;
-
-    @JsonProperty("callBackUrl")
-    private String callBackUrl;
 
     public String getMsisdn() {
         return msisdn;
@@ -54,13 +45,5 @@ public class ApiRequest implements Serializable {
 
     public void setCpId(String cpId) {
         CpId = cpId;
-    }
-
-    public String getCallBackUrl() {
-        return callBackUrl;
-    }
-
-    public void setCallBackUrl(String callBackUrl) {
-        this.callBackUrl = callBackUrl;
     }
 }
