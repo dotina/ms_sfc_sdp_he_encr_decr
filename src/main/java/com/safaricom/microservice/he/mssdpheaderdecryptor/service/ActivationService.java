@@ -258,9 +258,41 @@ public class ActivationService {
 
         String callBackMsg = callBackResponse.getOperation();
 
+
+
+        // Log service input
+            LogsManager.info(requestReferenceID, TRANSACTION_TYPE, "processCallBackRequest", "",
+                    callBackResponse.getRequestParam().getData(), sourceSystem, TARGET_SYSTEM, "", RESPONSE_CODE_0, "",
+                    "", "HEADERS: = ".concat(httpHeaders.toString()), "");
+            apiResponse = this.activateCust(requestReferenceID, sourceSystem, apiToken, apiRequest,null, operation);
+
+
         LogsManager.info(requestReferenceID, TRANSACTION_TYPE, "Process Call Back", "",
                 "", "", TARGET_SYSTEM, "", callBackCode, callBackMsg,
                 "", "", parseToJsonString(callBackResponse));
+
+
+
+
+        return new ResponseEntity<>(new ApiResponse(), HttpStatus.OK);
+    }
+    private ApiResponse callBackResp(String requestReferenceID, String sourceSystem, String apiToken, ApiRequest apiRequest,PaymentRequest payRequest, String operation)
+            throws JsonProcessingException {
+
+
+        LogsManager.error(requestReferenceID, TRANSACTION_TYPE, operation+" Customer", "",
+                msisdn, sourceSystem, TARGET_SYSTEM, "", parseInt(responseCode), RESPONSE_TIBCO_CALL_FAILED,
+                "", msisdn, parseToJsonString(responseBody));
+
+
+
+        // ErrorMapping errorMapping = this.getResponseMessage(responseCode);
+        return ApiResponse.responseFormatter(
+                parseInt(responseCode), requestReferenceID, message,
+                responseBody.getDescription(), responseBody);
+    }
+
+    private CallBackResponse prepRequest(CallBackResponse apiRequest,String requestId, String operationName, String msisdn){
 
         String[] dataValue = {"callBackResponse", msisdn, "callBackResponse"};
         String[] dataName = {"OfferCode", "TransactionId","ClientTransactionId",
@@ -275,13 +307,19 @@ public class ActivationService {
             data.setValue(dataValue[i]);
             dataSet.add(data);
         });
+          dataSet
+        RequestParam requestParam = new RequestParam();
+        requestParam.setData(dataSet);
 
+        //TODO: make this calls come from headers later for now they will be static
+        CallBackResponse callBackResponse = new CallBackResponse();
+        activationRequest.setChannel("APIGW");
+        activationRequest.setRequestId(requestId);
+        activationRequest.setOperation(operationName);
+        activationRequest.setRequestParam(requestParam);
 
-        return new ResponseEntity<>(new ApiResponse(), HttpStatus.OK);
+        return activationRequest;
     }
-
-
-
 
     private ErrorMapping getResponseMessage(final String responseCode) {
         ErrorMapping errorMapping = new ErrorMapping();
