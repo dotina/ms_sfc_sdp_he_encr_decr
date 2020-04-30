@@ -44,7 +44,7 @@ public class GlobalVariables {
      * SYSTEM INTERACTIONS
      * ==============================================*/
     public static final String TARGET_SYSTEM = "API_CALL_SDP";
-    public static final String TRANSACTION_TYPE = "ACTIVATION";
+    public static final String TRANSACTION_TYPE = "SDP_HE_MIDDLEWARE";
 
     /*================================================
      * RESPONSE CODES

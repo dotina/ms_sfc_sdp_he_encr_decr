@@ -29,3 +29,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### extra files ###
+*.zip
+*.tar
