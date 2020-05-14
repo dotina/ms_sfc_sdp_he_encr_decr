@@ -27,6 +27,25 @@ public class CallBackRestUtil {
     private final ConfigProperties configProperties;
     private final RestTemplate restTemplate;
 
+    private String errorMessage;
+    private String errorStatusDesc;
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public String getErrorStatusDesc() {
+        return errorStatusDesc;
+    }
+
+    public void setErrorStatusDesc(String errorStatusDesc) {
+        this.errorStatusDesc = errorStatusDesc;
+    }
+
     @Autowired
     public CallBackRestUtil(ConfigProperties configProperties, RestTemplate restTemplate) {
         this.configProperties = configProperties;
@@ -58,7 +77,7 @@ public class CallBackRestUtil {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth("dev_user", "dev_password");
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(apiCallUrl+endPoint.toLowerCase());
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(apiCallUrl);
 
         String requestCallToJson = parseToJsonString(requestPayload);
 
@@ -76,15 +95,17 @@ public class CallBackRestUtil {
                     sourceSystem, TARGET_SYSTEM, RESPONSE_TIBCO_CALL_FAILED, TIMEOUT_ERROR_CODE, RESPONSE_SERVICE_UNREACHABLE,
                     ExceptionUtils.getStackTrace(exception), requestCallToJson, exception.getResponseBodyAsString());
 
-//            errorMessage = exception.getMessage();
-//            errorStatusDesc = exception.getStatusText();
+            errorMessage = exception.getMessage();
+            errorStatusDesc = exception.getStatusText();
             return String.valueOf(exception.getRawStatusCode());
 
         } catch (ResourceAccessException exception) {
             LogsManager.error(referenceId, TRANSACTION_TYPE, "makeAPICall()", "", msisdn,
                     sourceSystem, TARGET_SYSTEM, RESPONSE_TIBCO_CALL_FAILED, TIMEOUT_ERROR_CODE, RESPONSE_SERVICE_UNREACHABLE,
                     ExceptionUtils.getStackTrace(exception), requestCallToJson, exception.getLocalizedMessage());
-            return null;
+            errorMessage = exception.getMessage();
+            errorStatusDesc = String.valueOf(exception.getMostSpecificCause());
+            return "500";
         }
     }
 }

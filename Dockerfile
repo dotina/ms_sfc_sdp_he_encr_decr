@@ -1,9 +1,21 @@
-FROM openjdk:8-jre-alpine
-VOLUME /tmp
+FROM openjdk:8
+
+LABEL maintainer = "dotina@safaricom.co.ke"
+
 EXPOSE 8080
-ADD target/ms-sdp-header-decryptor-1.0.0.jar ms-sdp-header-decryptor.jar
+
+VOLUME /tmp
+
+
+ADD target/ms-sdp-header-decryptor-1.0.1.jar ms-sdp-header-decryptor.jar
+
 CMD /bin/sh -c 'touch /ms-sdp-header-decryptor.jar'
+
 #RUN apk add tzdata
 ENV TZ=Africa/Nairobi
+
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-ENTRYPOINT ["java","-Xmx384m", "-XX:+UseG1GC", "-Djava.security.egd=file:/dev/./urandom","-jar","/ms-sdp-header-decryptor.jar"]
+
+ENV NO_PROXY="*.safaricom.net,.safaricom.net"
+
+ENTRYPOINT ["java","-Xmx1024m", "-XX:+UseG1GC", "-Djava.security.egd=file:/dev/./urandom","-jar","/ms-sdp-header-decryptor.jar"]

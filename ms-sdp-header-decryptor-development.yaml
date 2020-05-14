@@ -41,6 +41,15 @@ spec:
           failureThreshold: 3  # if check fails for 3 times in a row, we consider the pod is in a bad state, pod will be restarted
           successThreshold: 1 # if check succeeds for once, we consider the pod is back to normal
         
+      # volumeMounts:
+      # - mountPath: "/tmp"
+      #   name: ms-sdp-header-decryptor
+      # args:
+      # - "-v /shared/logs:/tmp"
+#   volumes:
+#   - name: ms-sdp-header-decryptor
+#     persistentVolumeClaim:
+#       claimName: microservices-test-claim
 
 ---
 apiVersion: v1
