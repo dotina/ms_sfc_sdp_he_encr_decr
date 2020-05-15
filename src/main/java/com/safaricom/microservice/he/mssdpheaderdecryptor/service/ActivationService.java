@@ -205,6 +205,12 @@ public class ActivationService {
                 responseBody.setDescription(this.restTemplateUtil.getErrorMessage());
                 message = this.restTemplateUtil.getErrorStatusDesc();
                 break;
+            case "405":
+                responseCode = "404";
+                responseBody.setStatus(responseCode);
+                responseBody.setDescription(this.restTemplateUtil.getErrorMessage());
+                message = this.restTemplateUtil.getErrorStatusDesc();
+                break;
             case "408":
                 responseCode = "408";
                 responseBody.setStatus(responseCode);

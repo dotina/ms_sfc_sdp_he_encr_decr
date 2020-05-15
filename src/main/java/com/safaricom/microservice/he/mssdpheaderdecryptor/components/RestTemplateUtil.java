@@ -17,6 +17,8 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 
 import static com.safaricom.microservice.he.mssdpheaderdecryptor.utils.GlobalVariables.*;
@@ -74,8 +76,11 @@ public class RestTemplateUtil {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(apiCallUrl+endPoint.toLowerCase());
 
         String requestCallToJson = parseToJsonString(requestPayload);
+        // ping the url
+
 
         try {
+
             HttpEntity<?> entity = new HttpEntity<>(requestPayload, headers);
 
             HttpEntity<String> response = restTemplate.exchange(builder.toUriString(), HttpMethod.POST, entity,
@@ -103,6 +108,39 @@ public class RestTemplateUtil {
         }
     }
 
+    public boolean pingHost(String host, int port, int timeout) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(host, port), timeout);
+            return true;
+        } catch (IOException e) {
+            return false; // Either timeout or unreachable or failed DNS lookup.
+        }
+    }
 
+    public boolean checkURL(String url){
+        HttpURLConnection connection = null;
+        try {
+            URL u = new URL("http://www.google.com/");
+            connection = (HttpURLConnection) u.openConnection();
+            //connection.setRequestMethod("HEAD");
+            connection.setRequestMethod("HEAD");
+            int code = connection.getResponseCode();
+            System.out.println("" + code);
+            return true;
+            // You can determine on HTTP return code received. 200 is success.
+        } catch (MalformedURLException e) {
+            System.out.println("There is an error : "+e.getLocalizedMessage());
+            e.printStackTrace();
+            return false;
+        } catch (IOException e) {
+            System.out.println("There is an error : "+e.getLocalizedMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
 
 }
