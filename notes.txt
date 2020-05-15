@@ -1,0 +1,62 @@
+CP ID : 	231
+User Name : 	he_api
+Password : 	0f20ea67@D
+
+You can access swagger on https://dtsvc.safaricom.com:8480/swagger-ui.html
+
+
+Your account has been created successfully.For accessing your account ,login on https://dtsvc.safaricom.com:8481/GUI and please use the following credentials
+Login Name  : 	derrick
+Password 	: 	0f20ea67@D
+
+
+the offer : testSDPOffer
+shortcode : 6202
+
+Mysql DB
+
+UAT
+10.197.5.1
+uname : dotina
+Pass  : D0T1n@Thur
+
+  RTole
+  OHtBgvR3
+==========
+  UAT
+==========
+
+	URL: https://svdt5kubmas01.safaricom.net:30256/#!/login
+	Namespace: msisdn
+	Registry: svdt5kubreg01.safaricom.net
+
+  KUbernetis Token : eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJtc2lzZG4iLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlY3JldC5uYW1lIjoiZG90aW5hLXRva2VuLXR6cmd6Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImRvdGluYSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjIyZTYzMGQ4LTQ4ZWUtMTFlYS1hY2FlLTAwMWE0YTE2MDE1OSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDptc2lzZG46ZG90aW5hIn0.eaSi_s5poKaOd-8qO3Lrdwc627YOqQ0S1pT_MnYZ3lLQeef6LnLPHWKakSnwfMp-O9OYDh_LVTgKnRkT0CUyYN_ANxv6XH93aO00gPHz46XCqNLZFbsTfEDoB5NlEzFVEzPg7bfU-mqY6uT_xHM8HPFc-GFHBNTj7BKO-ZpeHZM9fkAcdstVYnF94Rshvo2-vcF_Fz5UiDWBQcc-JuTOTVh8etchxw3s-CCw5OYP-vVSAgY3Wf0T-9urGteMOqDjl0qRTnOtoGBS6JTn_U19e_3JvYKn0XXn3YaxJRTkadpFrm22imumy6hWu7TNCAetfWCgLm1ov0xC7QMwde8JXQ
+
+  https://remedy9.safaricom.net:8443/arsys/
+
+
+  # Deploy your service using the deployment file as follows::
+#........................................................................................
+# Package the jar
+# mvn clean package -DskipTests
+#........................................................................................
+# Create Dockerfile image
+# docker build -t svdt5kubreg01.safaricom.net/ms-sdp-header-decryptor:v1.0.1 .
+#........................................................................................
+# Create Push Dockerfile image
+# docker push svdt5kubreg01.safaricom.net/ms-postpay-creditrating:1.0.0
+#........................................................................................
+# Check if docker image is deployed successful
+# docker images
+#........................................................................................
+# Run image
+# docker run -p 9090:9090 ms-postpay-creditrating
+#........................................................................................
+# Deploy Image on Kube
+# kubectl create -f ms-postpay-creditrating-deployment.yaml
+#........................................................................................
+#  view deployed service
+#  kubectl get namespaces
+#........................................................................................
+#  kubectl get services --all-namespaces
+# mvn clean test && mvn sonar:sonar -Dsonar.host.url=http://10.197.4.87:9090
