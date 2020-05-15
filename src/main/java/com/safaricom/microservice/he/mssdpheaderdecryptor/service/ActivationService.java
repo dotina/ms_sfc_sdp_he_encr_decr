@@ -16,9 +16,7 @@ import com.safaricom.microservice.he.mssdpheaderdecryptor.models.payloads.api.Re
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.payloads.sdp.activation.ActivationRequest;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.payloads.sdp.activation.Datum;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.payloads.sdp.activation.RequestParam;
-import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.api.ApiRequest;
-import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.api.ErrorMapping;
-import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.api.PaymentRequest;
+import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.api.*;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.callback.CallBackResponse;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.callback.CallResponse;
 import com.safaricom.microservice.he.mssdpheaderdecryptor.models.pojos.header.HeaderErrorMessage;
@@ -75,7 +73,7 @@ public class ActivationService {
         this.callBackRepository = callBackRepository;
     }
 
-    public ResponseEntity<ApiResponse> processRequest(HttpHeaders httpHeaders, ApiRequest apiRequest, PaymentRequest paymentRequest, String operation)
+    public ResponseEntity<ApiResponse> processRequest(HttpHeaders httpHeaders, Object object, String operation)
             throws JsonProcessingException {
 
         // Validate Headers
@@ -96,53 +94,48 @@ public class ActivationService {
         String apiToken = httpHeaders.get(X_API_TOKEN).get(0);
 
         // Validate the CallBack url entered
-        if ((apiRequest != null && !this.validations.urlValidator(apiRequest.getCallBackUrl())) || (apiRequest != null && apiRequest.getCallBackUrl().isEmpty()) || (paymentRequest != null && !this.validations.urlValidator(paymentRequest.getCallBackUrl())) || (paymentRequest != null && paymentRequest.getCallBackUrl().isEmpty())) {
-            return new ResponseEntity<>(ApiResponse.responseFormatter(RESPONSE_CODE_400, requestReferenceID,
-                    RESPONSE_INVALID_REQUEST, RESPONSE_WRONG_URL_FORMAT, "Wrong  CallBackURL Format"), HttpStatus.BAD_REQUEST);
+        if ((object instanceof ApiRequest) && !this.validations.urlValidator(((ApiRequest) object).getCallBackUrl()) ) {
+                return new ResponseEntity<>(ApiResponse.responseFormatter(RESPONSE_CODE_400, requestReferenceID,
+                        RESPONSE_INVALID_REQUEST, RESPONSE_WRONG_URL_FORMAT, "Wrong  CallBackURL Format"), HttpStatus.BAD_REQUEST);
+
         }
-        url = apiRequest != null ? apiRequest.getCallBackUrl() : paymentRequest.getCallBackUrl();
+
+        url = object instanceof ApiRequest ? ((ApiRequest) object).getCallBackUrl() : "https://posthere.io/6ebb-4eda-8465";
 
         // Check if CpiD is empty
-        if ((apiRequest != null && isEmpty(apiRequest.getCpId())) || (paymentRequest != null && isEmpty(paymentRequest.getCpId()))) {
+        if (object instanceof ApiRequest && isEmpty(((ApiRequest) object).getCpId())) {
             return new ResponseEntity<>(ApiResponse.responseFormatter(RESPONSE_CODE_400, requestReferenceID,
-                    RESPONSE_INVALID_REQUEST, RESPONSE_EMPTY_FIELD, headerErrorMessage), HttpStatus.OK);
+                    RESPONSE_INVALID_REQUEST, RESPONSE_EMPTY_FIELD, "The CpId field can't be empty"), HttpStatus.OK);
         }
 
         // Check if msisdn empty
-        if ((apiRequest != null && apiRequest.getMsisdn().isEmpty()) || (paymentRequest != null && paymentRequest.getMsisdn().isEmpty()) ) {
+        if (object instanceof ApiRequest && isEmpty(((ApiRequest) object).getMsisdn()) ) {
             return new ResponseEntity<>(ApiResponse.responseFormatter(RESPONSE_CODE_400, requestReferenceID,
-                    RESPONSE_INVALID_REQUEST, RESPONSE_INVALID_MSISDN, "This field can't be empty!!!"), HttpStatus.BAD_REQUEST);
+                    RESPONSE_INVALID_REQUEST, RESPONSE_INVALID_MSISDN, "The MSISDN field can't be empty!!!"), HttpStatus.BAD_REQUEST);
         }
 
         // Check if msisdn is not encrypted
-        if ((apiRequest != null && apiRequest.getMsisdn().substring(0,4).equals("2547")) || (apiRequest != null && apiRequest.getMsisdn().substring(0,4).equals("2541")) || (paymentRequest != null && paymentRequest.getMsisdn().substring(0,4).equals("2547")) || (paymentRequest != null && paymentRequest.getMsisdn().substring(0,4).equals("2541"))) {
+        if (object instanceof ApiRequest && ((((ApiRequest) object).getMsisdn().substring(0,4).equals("2547")) || (((ApiRequest) object).getMsisdn().substring(0,4).equals("2541"))) ) {
             return new ResponseEntity<>(ApiResponse.responseFormatter(RESPONSE_CODE_400, requestReferenceID,
                     RESPONSE_INVALID_REQUEST, RESPONSE_INVALID_MSISDN, "Invalid MSISDN | Only encrypted MSISDN allowed"), HttpStatus.BAD_REQUEST);
 
         }
 
         // Check if offer id is empty
-        if ((apiRequest != null && isEmpty(apiRequest.getOfferCode())) || (paymentRequest != null && isEmpty(paymentRequest.getOfferCode()))) {
+        if (object instanceof ApiRequest && isEmpty(((ApiRequest) object).getOfferCode())) {
             return new ResponseEntity<>(ApiResponse.responseFormatter(RESPONSE_CODE_401, requestReferenceID,
-                    RESPONSE_INVALID_REQUEST, RESPONSE_EMPTY_FIELD, headerErrorMessage), HttpStatus.OK);
+                    RESPONSE_INVALID_REQUEST, RESPONSE_EMPTY_FIELD, "The Offer Code field can't be empty"), HttpStatus.OK);
         }
 
         // Default
         ApiResponse apiResponse = null;
         // Log service input
-        if (apiRequest != null) {
-            LogsManager.info(requestReferenceID, TRANSACTION_TYPE, "processRequest", "",
-                    apiRequest.getMsisdn(), sourceSystem, TARGET_SYSTEM, "", RESPONSE_CODE_0, "",
-                    "", "HEADERS: = ".concat(httpHeaders.toString()), "");
-            apiResponse = this.activateCust(requestReferenceID, sourceSystem, apiToken, apiRequest,null, operation);
-        }
 
-        if (paymentRequest != null) {
             LogsManager.info(requestReferenceID, TRANSACTION_TYPE, "processRequest", "",
-                    paymentRequest.getMsisdn(), sourceSystem, TARGET_SYSTEM, "", RESPONSE_CODE_0, "",
+                    ((ApiRequest) object).getMsisdn(), sourceSystem, TARGET_SYSTEM, "", RESPONSE_CODE_0, "",
                     "", "HEADERS: = ".concat(httpHeaders.toString()), "");
-            apiResponse = this.activateCust(requestReferenceID, sourceSystem, apiToken, null,paymentRequest, operation);
-        }
+            apiResponse = this.activateCust(requestReferenceID, sourceSystem, apiToken, object, operation);
+
 
 
         // return correct status
@@ -151,31 +144,44 @@ public class ActivationService {
 //        }
         // Log service output
         LogsManager.info(requestReferenceID, TRANSACTION_TYPE, "processRequest", "",
-                apiRequest != null ? apiRequest.getMsisdn() : paymentRequest.getMsisdn(), sourceSystem, TARGET_SYSTEM, "", RESPONSE_CODE_200, "",
-                "", parseToJsonString(apiRequest), parseToJsonString(apiResponse));
+                ((ApiRequest) object).getMsisdn(), sourceSystem, TARGET_SYSTEM, "", RESPONSE_CODE_200, "",
+                "", parseToJsonString(object), parseToJsonString(apiResponse));
 
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
-    private ApiResponse activateCust(String requestReferenceID, String sourceSystem, String apiToken, ApiRequest apiRequest,PaymentRequest payRequest, String operation)
+    private ApiResponse activateCust(String requestReferenceID, String sourceSystem, String apiToken, Object obj, String operation)
             throws JsonProcessingException {
 
-        ActivationRequest paymentRequest = null;
-        ActivationRequest activationRequest = null;
+        ActivationRequest makeRequest = null;
 
         objectMapper = new ObjectMapper();
         String restTemplateResponse = "";
-        if (payRequest != null) {
-            String  decMsisdn = (MSISDNCryptoLib.SAFFPEdecryptor(payRequest.getMsisdn()));
-           paymentRequest = prepRequest(null,payRequest, requestReferenceID, operation, decMsisdn);
+        if ((obj instanceof PaymentRequest) && (operation.equalsIgnoreCase("payment"))) {
+            String  decMsisdn = (MSISDNCryptoLib.SAFFPEdecryptor(((PaymentRequest) obj).getMsisdn()));
+            makeRequest = prepRequest(obj, requestReferenceID, operation, decMsisdn);
             restTemplateResponse = this.restTemplateUtil.makeAPICall(sourceSystem, apiToken, X_CORRELATION_CONVERSATION_ID,
-                    requestReferenceID, configProperties.getSdpUrl(), "paymentRequest", msisdn, paymentRequest);
+                    requestReferenceID, configProperties.getSdpUrl(), "paymentRequest", msisdn, makeRequest);
         }
-        if (apiRequest != null) {
-            String  decMsisdn = (MSISDNCryptoLib.SAFFPEdecryptor(apiRequest.getMsisdn()));
-            activationRequest = prepRequest(apiRequest, null,requestReferenceID, operation, decMsisdn);
+        if ((obj instanceof ApiRequest) && (operation.equalsIgnoreCase("deACTIVATE") || operation.equalsIgnoreCase("activate"))) {
+            String  decMsisdn = (MSISDNCryptoLib.SAFFPEdecryptor(((ApiRequest) obj).getMsisdn()));
+            makeRequest = prepRequest(obj,requestReferenceID, operation, decMsisdn);
             restTemplateResponse = this.restTemplateUtil.makeAPICall(sourceSystem, apiToken, X_CORRELATION_CONVERSATION_ID,
-                    requestReferenceID, configProperties.getSdpUrl(), operation, msisdn, activationRequest);
+                    requestReferenceID, configProperties.getSdpUrl(), operation, msisdn, makeRequest);
+        }
+
+        if ((obj instanceof RefundRequest) && (operation.equalsIgnoreCase("refund"))) {
+            String  decMsisdn = (MSISDNCryptoLib.SAFFPEdecryptor(((ApiRequest) obj).getMsisdn()));
+            makeRequest = prepRequest(obj,requestReferenceID, operation, decMsisdn);
+            restTemplateResponse = this.restTemplateUtil.makeAPICall(sourceSystem, apiToken, X_CORRELATION_CONVERSATION_ID,
+                    requestReferenceID, configProperties.getSdpUrl(), "refundRequest", msisdn, makeRequest);
+        }
+
+        if ((obj instanceof SendSMS) && (operation.equalsIgnoreCase("sendsms"))) {
+            String  decMsisdn = (MSISDNCryptoLib.SAFFPEdecryptor(((SendSMS) obj).getMsisdn()));
+            makeRequest = prepRequest(obj,requestReferenceID, operation, decMsisdn);
+            restTemplateResponse = this.restTemplateUtil.makeAPICall(sourceSystem, apiToken, X_CORRELATION_CONVERSATION_ID,
+                    requestReferenceID, configProperties.getSdpUrl(), "sendSMSRequest", msisdn, makeRequest);
         }
 
         String responseCode ="";
@@ -216,7 +222,7 @@ public class ActivationService {
                 responseCode = activationResponse.getResponseParam().getStatusCode();
                 responseBody.setStatus(activationResponse.getResponseParam().getStatus());
                 responseBody.setDescription(activationResponse.getResponseParam().getDescription());
-                message = apiRequest != null ? activationRequest.getOperation() : paymentRequest.getOperation();
+                message = activationResponse.getOperation();
                 break;
         }
 
@@ -249,18 +255,26 @@ public class ActivationService {
 
 
 
-    private ActivationRequest prepRequest(ApiRequest apiRequest, PaymentRequest paymentRequest,String requestId, String operationName, String msisdn){
+    private ActivationRequest prepRequest(Object obj,String requestId, String operationName, String msisdn){
         String[] dataValue ={} ;
         String[] dataName = {};
-        if(paymentRequest != null) {
-             dataValue = new String[]{paymentRequest.getOfferCode(), msisdn, paymentRequest.getChargeAmount(), paymentRequest.getCpId()};
+        if((obj instanceof PaymentRequest) && (operationName.equalsIgnoreCase("payment"))) {
+             dataValue = new String[]{((PaymentRequest) obj).getOfferCode(), msisdn, ((PaymentRequest) obj).getChargeAmount(), ((PaymentRequest) obj).getCpId()};
              dataName = new String[]{"OfferCode", "Msisdn", "ChargeAmount", "CpId"};
         }
-        if(apiRequest != null) {
-            dataValue = new String[]{apiRequest.getOfferCode(), msisdn, apiRequest.getCpId()};
+        if((obj instanceof ApiRequest) && (operationName.equalsIgnoreCase("deACTIVATE") || operationName.equalsIgnoreCase("activate"))) {
+            dataValue = new String[]{((ApiRequest) obj).getOfferCode(), msisdn, ((ApiRequest) obj).getCpId()};
             dataName = new String[]{"OfferCode", "Msisdn", "CpId"};
         }
 
+        if((obj instanceof RefundRequest) && (operationName.equalsIgnoreCase("refund"))) {
+            dataValue = new String[]{((RefundRequest) obj).getOfferCode(), msisdn, ((RefundRequest) obj).getCpId(), ((RefundRequest) obj).getChargeAmount(), ((RefundRequest) obj).getBillingId(), ((RefundRequest) obj).getDeactivateOperation()};
+            dataName = new String[]{"OfferCode", "Msisdn", "CpId", "ChargeAmount", "BillingId", "DeactivateOperation"};
+        }
+        if((obj instanceof SendSMS) && (operationName.equalsIgnoreCase("sendsms"))) {
+            dataValue = new String[]{((SendSMS) obj).getOfferCode(), msisdn, ((SendSMS) obj).getCpId(), ((SendSMS) obj).getLinkId(), ((SendSMS) obj).getContent()};
+            dataName = new String[]{"OfferCode", "Msisdn", "CpId", "LinkId", "Content"};
+        }
 
         Set<Datum> dataSet = new HashSet<>();
 
