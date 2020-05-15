@@ -73,7 +73,7 @@ public class RestTemplateUtil {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth("dev_user", "dev_password");
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(apiCallUrl+endPoint.toLowerCase());
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(apiCallUrl+endPoint);
 
         String requestCallToJson = parseToJsonString(requestPayload);
         // ping the url
@@ -82,7 +82,7 @@ public class RestTemplateUtil {
         try {
 
             HttpEntity<?> entity = new HttpEntity<>(requestPayload, headers);
-
+//            LogsManager.in;
             HttpEntity<String> response = restTemplate.exchange(builder.toUriString(), HttpMethod.POST, entity,
                     String.class);
 

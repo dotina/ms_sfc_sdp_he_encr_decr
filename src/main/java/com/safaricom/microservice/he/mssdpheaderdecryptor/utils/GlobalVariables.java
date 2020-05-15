@@ -24,6 +24,9 @@ public class GlobalVariables {
     public static final String X_SOURCE_TIMESTAMP = "X-Source-Timestamp";
     public static final String X_VERSION = "X-Version";
     public static final String X_API_TOKEN = "X-api-auth-token";
+    public static final String X_XSS_PROTECTION = "X-XSS-Protection";
+    public static final String X_FRAME_OPTIONS = "X-Frame-Options";
+    public static final String X_CONTENT_TYPE_OPTION = "X-Content-Type-Options";
 
     /*================================================
      * APPLICATION PROFILES

@@ -167,7 +167,7 @@ public class ActivationService {
             String  decMsisdn = (MSISDNCryptoLib.SAFFPEdecryptor(((ApiRequest) obj).getMsisdn()));
             makeRequest = prepRequest(obj,requestReferenceID, operation, decMsisdn);
             restTemplateResponse = this.restTemplateUtil.makeAPICall(sourceSystem, apiToken, X_CORRELATION_CONVERSATION_ID,
-                    requestReferenceID, configProperties.getSdpUrl(), operation, msisdn, makeRequest);
+                    requestReferenceID, configProperties.getSdpUrl(), operation.toLowerCase(), msisdn, makeRequest);
         }
 
         if ((obj instanceof RefundRequest) && (operation.equalsIgnoreCase("refund"))) {
